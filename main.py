@@ -6,9 +6,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
-from pydiagram.py_class_extractor import generate_classes_dicts_from_directory, generate_classes_dicts_from_file
-from pydiagram.py_class_extractor.ast_management import parse_ast_from_file
-from pydiagram.py_class_extractor.file_management import save_data_to_json
+from pydiagram.py_class_extractor import generate_classes_dicts_from_directory
 from pydiagram.uml_generator.builders.relationships import RelationshipBuilder
 from pydiagram.uml_generator.elements import DrawIODiagram, UMLClassDiagramElement
 from pydiagram.uml_generator.relationships import AssociationRelationship, InheritanceRelationship
@@ -17,7 +15,6 @@ from pydiagram.uml_generator.utils import Dimensions
 import networkx as nx
 from networkx.drawing.nx_pydot import pydot_layout
 
-from werkzeug.utils import secure_filename
 
 from zipfile import ZipFile
 
@@ -174,7 +171,7 @@ def main():
     install_graphviz()
     add_graphviz_to_path()
 
-    metadata = generate_classes_dicts_from_file(
+    metadata = generate_classes_dicts_from_directory(
         os.path.abspath(r"./temp/content/"))
 
     positions = autolayout_class_diagram(metadata)
