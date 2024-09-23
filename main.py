@@ -1,5 +1,6 @@
 import shutil
 from flask import Flask, request, send_file
+from flask_cors import CORS
 import logging
 import os
 import subprocess
@@ -159,6 +160,7 @@ def clean_folder(folder_path, create=False):
 
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route("/", methods=['POST'])
