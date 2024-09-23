@@ -29,52 +29,52 @@ def has_common_element(arr1, arr2):
     return bool(set(arr1) & set(arr2))
 
 
-def install_graphviz():
-    """Install Graphviz using winget if it's not already installed."""
-    try:
-        # Check if Graphviz is already installed
-        result = subprocess.run(
-            ['winget', 'search', 'Graphviz.Graphviz', '--accept-source-agreements'], capture_output=True, text=True)
-        if "Graphviz" in result.stdout:
-            logging.info("Graphviz is already installed.")
-            return
-    except FileNotFoundError:
-        logging.error("winget not found. Please install winget first.")
-        sys.exit(1)
-    except subprocess.CalledProcessError:
-        logging.error("Error checking Graphviz installation status.")
-        sys.exit(1)
+# def install_graphviz():
+#     """Install Graphviz using winget if it's not already installed."""
+#     try:
+#         # Check if Graphviz is already installed
+#         result = subprocess.run(
+#             ['winget', 'search', 'Graphviz.Graphviz', '--accept-source-agreements'], capture_output=True, text=True)
+#         if "Graphviz" in result.stdout:
+#             logging.info("Graphviz is already installed.")
+#             return
+#     except FileNotFoundError:
+#         logging.error("winget not found. Please install winget first.")
+#         sys.exit(1)
+#     except subprocess.CalledProcessError:
+#         logging.error("Error checking Graphviz installation status.")
+#         sys.exit(1)
 
-    logging.info("Installing Graphviz...")
-    try:
-        subprocess.run([
-            'winget', 'install', 'Graphviz.Graphviz',
-            '--accept-source-agreements',
-            '--accept-package-agreements'
-        ], check=True)
-        logging.info("Graphviz installed successfully.")
-    except subprocess.CalledProcessError:
-        logging.error("Failed to install Graphviz.")
-        sys.exit(1)
+#     logging.info("Installing Graphviz...")
+#     try:
+#         subprocess.run([
+#             'winget', 'install', 'Graphviz.Graphviz',
+#             '--accept-source-agreements',
+#             '--accept-package-agreements'
+#         ], check=True)
+#         logging.info("Graphviz installed successfully.")
+#     except subprocess.CalledProcessError:
+#         logging.error("Failed to install Graphviz.")
+#         sys.exit(1)
 
 
-def add_graphviz_to_path():
-    """Add Graphviz to system PATH."""
-    graphviz_bin_dir = r"C:\Program Files\Graphviz\bin"
-    current_path = os.getenv('PATH', '')
+# def add_graphviz_to_path():
+#     """Add Graphviz to system PATH."""
+#     graphviz_bin_dir = r"C:\Program Files\Graphviz\bin"
+#     current_path = os.getenv('PATH', '')
 
-    if graphviz_bin_dir not in current_path:
-        new_path = os.pathsep.join([current_path, graphviz_bin_dir])
-        os.environ['PATH'] = new_path
+#     if graphviz_bin_dir not in current_path:
+#         new_path = os.pathsep.join([current_path, graphviz_bin_dir])
+#         os.environ['PATH'] = new_path
 
-        try:
-            subprocess.run(['setx', 'PATH', new_path], check=True)
-            logging.info("Graphviz directory added to PATH.")
-        except subprocess.CalledProcessError:
-            logging.error("Failed to add Graphviz directory to PATH.")
-            sys.exit(1)
-    else:
-        logging.info("Graphviz directory is already in PATH.")
+#         try:
+#             subprocess.run(['setx', 'PATH', new_path], check=True)
+#             logging.info("Graphviz directory added to PATH.")
+#         except subprocess.CalledProcessError:
+#             logging.error("Failed to add Graphviz directory to PATH.")
+#             sys.exit(1)
+#     else:
+#         logging.info("Graphviz directory is already in PATH.")
 
 
 def sanitize_class_name(name):
@@ -141,12 +141,14 @@ def create_relationships(metadata, classes, diagram):
     return relationships
 
 
-def clean_folder(folder_path):
+def clean_folder(folder_path, create=False):
     # Ensure the folder exists
     if not os.path.isdir(folder_path):
-        raise ValueError(
-            f"The folder {folder_path} does not exist or is not a directory.")
+        if not create:
+            raise ValueError(
+                f"The folder {folder_path} does not exist or is not a directory.")
 
+        os.makedirs(folder_path)
     # Iterate over the contents of the folder
     for item in os.listdir(folder_path):
         item_path = os.path.join(folder_path, item)
@@ -161,15 +163,15 @@ app = Flask(__name__)
 
 @app.route("/", methods=['POST'])
 def main():
-    clean_folder("./temp")
+    clean_folder("./temp", create=True)
     file = request.files["file"]
     path = f"./temp/file.zip"
     file.save(path)
     with ZipFile(path) as zip:
         zip.extractall(path="./temp/content/")
 
-    install_graphviz()
-    add_graphviz_to_path()
+    # install_graphviz()
+    # add_graphviz_to_path()
 
     metadata = generate_classes_dicts_from_directory(
         os.path.abspath(r"./temp/content/"))
@@ -182,9 +184,9 @@ def main():
 
     diagram.extend(relationships)
     diagram.extend(classes)
-    with open('./temp/content/output.xml', 'w', encoding='utf-8') as file:
+    with open('./temp/output.xml', 'w', encoding='utf-8') as file:
         file.write(ET.tostring(diagram, encoding='unicode'))
 
     logging.info("UML diagram saved as 'output.xml'.")
 
-    return send_file("./temp/content/output.xml", as_attachment=True)
+    return send_file("./temp/output.xml", as_attachment=True)
